@@ -1,0 +1,550 @@
+#include <iostream>
+#include <stdlib.h>
+#include <time.h>
+using namespace std;
+
+void show(int **array, int size)
+{
+    cout << endl;
+    for (int i = 0; i < size; i++)
+        cout << "\t" << (i + 1);
+    cout << "\n\t";
+
+    for (int i = 1; i < (size * 7); i++)
+        cout << "_";
+    cout << endl;
+
+    for (int i = 0; i < size; i++)
+    {
+        cout << (i + 1) << "|\t";
+        for (int j = 0; j < size; j++)
+        {
+            cout << array[i][j] << "\t";
+        }
+        cout << endl;
+    }
+}
+
+void mix(int **array, int size)               // перемешиваем костяшки в произвольном порядке
+{
+    int t_i, t_j;
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            t_i = rand() % size;
+            t_j = rand() % size;
+            swap(array[i][j], array[t_i][t_j]);
+        }
+    }
+}
+
+void human_mix(int** array, int size)         // ручное перемешивание костяшек
+{
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            array[i][j] = 100;
+        }
+    }
+
+    cout << "\n\tПри заполнении необходимо ввести координаты ячейки, № строки и № столбца.\n";
+    int elem = 0;
+    int w_i, w_j;
+
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            cout << "\n\tКуда поставим " << elem << "?\n";
+            cin >> w_i >> w_j;
+            while ( w_i > size || w_i < 1 || w_j > size || w_j < 1 || (array[w_i - 1][w_j - 1] >= 0 && array[w_i - 1][w_j - 1] < size*size) )
+            {
+                cout << "\n\tНельзя заполнить данную ячейку!!!\n";
+                cout << "\n\tКуда поставим " << elem << "?\n";
+                cin >> w_i >> w_j;
+            }
+            array[w_i-1][w_j-1] = elem;
+            system("cls");
+            show(array, size);
+            elem++;
+        }
+    }
+}
+
+int check(int **array, int size)             // проверяем, возмоно ли собрать данную комбинацию, 
+{                                            // если нет в main-е работает бесконечный цикл, пока не подберем "собираемую" комбинацию
+    int counter = 0;
+
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            for (int i1 = 0; i1 < size; i1++)
+            {
+                for (int j1 = 0; j1 < size; j1++)
+                {
+                    if (i != i1 || j != j1)
+                    {
+                        if (i < i1)
+                        {
+                            if (array[i][j] > array[i1][j1] && array[i1][j1] != 0)
+                            {
+                                counter++;
+                            }
+                        }
+                        else if (i == i1)
+                        {
+                            if (j < j1)
+                            {
+                                if (array[i][j] > array[i1][j1] && array[i1][j1] != 0)
+                                {
+                                    counter++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bool marker = true;
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            if (array[i][j] == 0)
+            {
+                counter += i + 1;
+                marker = false;
+                break;
+            }
+        }
+        if (marker == false)
+            break;
+    }
+
+    return counter;
+}
+
+
+int main()
+{
+    setlocale(0, "");
+    srand(time(NULL));
+    int counter_step = 0;   // счетчик шагов
+    int counter_win;        // счетчик определения победы
+    int index_i;            // определение координаты строки с 0 в момент начала игры
+    int index_j;            // определение координаты столбца с 0 в момент начала игры
+    int q = 1;              // индекс при ручном заполнении для исходного положения доски от 1 до 15 с 0 на последнем элементе
+    int size;               // размер доски
+    int p;                  // кто перемешивает пятнашки
+    int w;                  // кто собирает пятнашки
+    bool marker = false;    // выход из цикла игры при наступлении победы
+    time_t start, end;      // время старта игры, время окончания игры
+    float seconds;          // фиксирование результата времени, затраченного на игру
+   
+    cout << "\nПредлагаем Вам собрать 'Пятнашки',\n";
+    cout << "необходимо выставить все элементы от первого до последнего по порядку.\n";
+    cout << "\nдля того что бы передвигать элемент, необходимо ввести его координаты: № строки, затем № столбца.\n";
+    cout << "за один раз можно передвигать только один элемент, стоящий рядом с пустой ячейкой (0).\n\n\t\t\t\t\t\t\t\t\tУдачи!\n\n";
+    
+    cout << "\n\tВыберите размер доски: 4*4 - введите 4, 3*3 - введите 3: ";
+    cin >> size;
+    while (size != 3 && size != 4)
+    {
+        cout << "\n\tНеобходимо ввести 3 или 4 !!!";
+        cout << "\n\tВыберите размер доски: 4*4 - введите 4, 3*3 - введите 3: ";
+        cin >> size;
+    }
+
+    cout << "\n\tКто будет перемешивать костяшки? \n";
+    cout << "\n\tчеловек - введите 1\n\tкомпьютер - введите 2\n\t";
+    cin >> p;
+    while (p != 1 && p != 2)
+    {
+        cout << "\n\tНеобходимо ввести 1 или 2 !!!";
+        cout << "\n\tКто будет перемешивать костяшки? \n";
+        cout << "\n\tчеловек - введите 1\n\tкомпьютер - введите 2\n\t";
+        cin >> p;
+    }
+
+
+    int** array = new int* [size];
+    for (int i = 0; i < size; i++)
+        array[i] = new int[size];
+
+    switch (size)
+    {
+        case 3:
+        {
+            if (p == 1)
+            {
+                while (true)
+                {
+                    human_mix(array, size);
+                    if ((check(array, size) % 2) == 0)
+                        cout << "\n\n\tВведенная комбинация нерешаема, повторите перемешивание.\n";
+                    else
+                        break;
+                }
+            }
+            else if (p == 2)
+            {
+                for (int i = 0; i < size; i++)
+                {
+                    for (int j = 0; j < size; j++)
+                    {
+                        array[i][j] = q;
+                        q++;
+                    }
+                }
+                array[2][2] = 0;
+                while (true)
+                {
+                    mix(array, size);
+                    if ((check(array, size) % 2) != 0)
+                        break;
+                }
+            }
+
+            cout << "\n\tКто будет собирать?\n";
+            cout << "\n\tчеловек - введите 1\n\tкомпьютер - введите 2\n\t";
+            cin >> w;
+            while (w != 1 && w != 2)
+            {
+                cout << "\n\tНеобходимо ввести 1 или 2 !!!";
+                cout << "\n\tКто будет собирать?\n";
+                cout << "\n\tчеловек - введите 1\n\tкомпьютер - введите 2\n\t";
+                cin >> w;
+            }
+
+
+            cout << "\n\n\tИсходное положение:";
+            if (w == 1)
+            {
+                time(&start);
+                while (marker == false)
+                {
+                    for (int i = 0; i < size; i++)        // определение элемента с '0', что бы передвигать соседнее с ним
+                    {
+                        for (int j = 0; j < size; j++)
+                        {
+                            if (array[i][j] == 0)
+                            {
+                                index_i = i;
+                                index_j = j;
+                            }
+                        }
+                    }
+
+                    system("cls");
+                    show(array, size);
+                    int x, y;
+                    cout << "\n\tКакой элемент будем двигать, введите координаты:\n";
+                    cin >> x >> y;
+
+                    while ((x - 1) > (index_i + 1) || (x - 1) < (index_i - 1) || (y - 1) > (index_j + 1) || (y - 1) < (index_j - 1)  // крест
+                        || ((x - 1) == (index_i - 1) && (y - 1) == (index_j - 1))  // левый верх
+                        || ((x - 1) == (index_i - 1) && (y - 1) == (index_j + 1))  // левый низ
+                        || ((x - 1) == (index_i + 1) && (y - 1) == (index_j - 1))  // правый верх            
+                        || ((x - 1) == (index_i + 1) && (y - 1) == (index_j + 1))  // правый низ            
+                        || ((x - 1) == index_i && (y - 1) == index_j)              // исключение перемещения пустой (с нулем) ячейки
+                        || (x > size || x < 1 || y > size || y < 1))               // исключение ввода несуществующего элемента
+                    {
+                        cout << "\n\tНельзя переместить такой элемент!!!\n";
+                        cout << "\tКакой элемент будем перемещать, введите координаты:\n";
+                        cin >> x >> y;
+                    }
+
+                    swap(array[index_i][index_j], array[x - 1][y - 1]);
+
+                    counter_win = 1;                                               // проверка на победу
+                    for (int i = 0; i < size; i++)
+                    {
+                        for (int j = 0; j < size; j++)
+                        {
+                            if (array[i][j] == counter_win)
+                                counter_win++;
+                            else
+                                break;
+                        }
+                    }
+
+                    counter_step++;
+
+                    if (counter_win == 9 && array[2][2] == 0)
+                    {
+                        marker = true;
+                    }
+                }
+
+                system("cls");
+                cout << "\n\n\tПобеда!!!\n\n\a";
+                show(array, size);
+                time(&end);
+                seconds = difftime(end, start);
+                cout << "\n\n\tПоздравляем, Вы собрали пятнашки, у Вас ушло " << counter_step << " ходов и " << seconds << " секунд.";
+                break;
+            }
+            else if (w == 2)
+            {
+                time(&start);
+                while (marker == false)
+                {
+                    for (int i = 0; i < size; i++)        // определение элемента с '0', что бы передвигать соседнее с ним
+                    {
+                        for (int j = 0; j < size; j++)
+                        {
+                            if (array[i][j] == 0)
+                            {
+                                index_i = i;
+                                index_j = j;
+                            }
+                        }
+                    }
+
+                    system("cls");
+                    show(array, size);
+                    int x, y;
+                    x = rand() % 4 + 1;
+                    y = rand() % 4 + 1;
+
+                    while ((x - 1) > (index_i + 1) || (x - 1) < (index_i - 1) || (y - 1) > (index_j + 1) || (y - 1) < (index_j - 1)  // крест
+                        || ((x - 1) == (index_i - 1) && (y - 1) == (index_j - 1))  // левый верх
+                        || ((x - 1) == (index_i - 1) && (y - 1) == (index_j + 1))  // левый низ
+                        || ((x - 1) == (index_i + 1) && (y - 1) == (index_j - 1))  // правый верх            
+                        || ((x - 1) == (index_i + 1) && (y - 1) == (index_j + 1))  // правый низ            
+                        || ((x - 1) == index_i && (y - 1) == index_j)              // исключение перемещения пустой (с нулем) ячейки
+                        || (x > size || x < 1 || y > size || y < 1))               // исключение ввода несуществующего элемента
+                    {
+                        x = rand() % 4 + 1;
+                        y = rand() % 4 + 1;
+                    }
+
+                    swap(array[index_i][index_j], array[x - 1][y - 1]);
+
+                    counter_win = 1;                                               // проверка на победу
+                    for (int i = 0; i < size; i++)
+                    {
+                        for (int j = 0; j < size; j++)
+                        {
+                            if (array[i][j] == counter_win)
+                                counter_win++;
+                            else
+                                break;
+                        }
+                    }
+
+                    counter_step++;
+
+                    if (counter_win == 9 && array[2][2] == 0)
+                    {
+
+                        marker = true;
+                    }
+                }
+
+                system("cls");
+                cout << "\n\n\tПобеда!!!\n\n\a";
+                show(array, size);
+                time(&end);
+                seconds = difftime(end, start);
+                cout << "\n\n\tПоздравляем, компьютер собрал пятнашки, у него ушло " << counter_step << " ходов и " << seconds << " секунд.";
+                break;
+            }
+        }
+
+
+        case 4:
+        {
+            if (p == 1)
+            {
+                while (true)
+                {
+                    human_mix(array, size);
+                    if ((check(array, size) % 2) != 0)
+                        cout << "\n\n\tВведенная комбинация нерешаема, повторите перемешивание.\n";
+                    else
+                        break;
+                }
+            }
+            else if (p == 2)
+            {
+                for (int i = 0; i < size; i++)
+                {
+                    for (int j = 0; j < size; j++)
+                    {
+                        array[i][j] = q;
+                        q++;
+                    }
+                }
+                array[3][3] = 0;
+
+                while (true)
+                {
+                    mix(array, size);
+                    if ((check(array, size) % 2) == 0)
+                        break;
+                }
+            }
+
+            cout << "\n\tКто будет собирать?\n";
+            cout << "\n\tчеловек - введите 1\n\tкомпьютер - введите 2\n\t";
+            cin >> w;
+            while (w != 1 && w != 2)
+            {
+                cout << "\n\tНеобходимо ввести 1 или 2 !!!";
+                cout << "\n\tКто будет собирать?\n";
+                cout << "\n\tчеловек - введите 1\n\tкомпьютер - введите 2\n\t";
+                cin >> w;
+            }
+
+            if (w == 1)
+            {
+                cout << "\n\n\tИсходное положение:";
+                time(&start);
+                while (marker == false)
+                {
+                    for (int i = 0; i < size; i++)                     // определение элемента с '0', что бы передвигать соседнее с ним
+                    {
+                        for (int j = 0; j < size; j++)
+                        {
+                            if (array[i][j] == 0)
+                            {
+                                index_i = i;
+                                index_j = j;
+                            }
+                        }
+                    }
+
+                    system("cls");
+                    show(array, size);
+                    int x, y;
+                    cout << "\n\tКакой элемент будем двигать, введите координаты:\n";
+                    cin >> x >> y;
+
+                    while ((x - 1) > (index_i + 1) || (x - 1) < (index_i - 1) || (y - 1) > (index_j + 1) || (y - 1) < (index_j - 1)  // крест
+                        || ((x - 1) == (index_i - 1) && (y - 1) == (index_j - 1))  // левый верх
+                        || ((x - 1) == (index_i - 1) && (y - 1) == (index_j + 1))  // левый низ
+                        || ((x - 1) == (index_i + 1) && (y - 1) == (index_j - 1))  // правый верх            
+                        || ((x - 1) == (index_i + 1) && (y - 1) == (index_j + 1))  // правый низ            
+                        || ((x - 1) == index_i && (y - 1) == index_j)              // исключение перемещения пустой (с нулем) ячейки
+                        || (x > size || x < 1 || y > size || y < 1))               // исключение ввода несуществующего элемента
+                    {
+                        cout << "\n\tНельзя переместить такой элемент!!!\n";
+                        cout << "\tКакой элемент будем перемещать, введите координаты:\n";
+                        cin >> x >> y;
+                    }
+
+
+
+                    swap(array[index_i][index_j], array[x - 1][y - 1]);
+
+                    counter_win = 1;                                               // проверка на победу
+                    for (int i = 0; i < size; i++)
+                    {
+                        for (int j = 0; j < size; j++)
+                        {
+                            if (array[i][j] == counter_win)
+                                counter_win++;
+                            else
+                                break;
+                        }
+                    }
+
+                    counter_step++;
+
+                    if (counter_win == 16 && array[3][3] == 0)
+                    {
+
+                        marker = true;
+                    }
+                }
+
+                system("cls");
+                cout << "\n\n\tПобеда!!!\n\n\a";
+                show(array, size);
+                time(&end);
+                seconds = difftime(end, start);
+                cout << "\n\n\tПоздравляем, Вы собрали пятнашки, у Вас ушло " << counter_step << " ходов и " << seconds << " секунд.";
+                break;
+            }
+            else if (w == 2)
+            {
+                cout << "\n\n\tИсходное положение:";
+                time(&start);
+                while (marker == false)
+                {
+                    for (int i = 0; i < size; i++)                             // определение элемента с '0', что бы передвигать соседнее с ним
+                    {
+                        for (int j = 0; j < size; j++)
+                        {
+                            if (array[i][j] == 0)
+                            {
+                                index_i = i;
+                                index_j = j;
+                            }
+                        }
+                    }
+
+                    system("cls");
+                    show(array, size);
+                    int x, y;
+                    x = rand() % 4 + 1;
+                    y = rand() % 4 + 1;
+
+                    while ((x - 1) > (index_i + 1) || (x - 1) < (index_i - 1) || (y - 1) > (index_j + 1) || (y - 1) < (index_j - 1)  // крест
+                        || ((x - 1) == (index_i - 1) && (y - 1) == (index_j - 1))  // левый верх
+                        || ((x - 1) == (index_i - 1) && (y - 1) == (index_j + 1))  // левый низ
+                        || ((x - 1) == (index_i + 1) && (y - 1) == (index_j - 1))  // правый верх            
+                        || ((x - 1) == (index_i + 1) && (y - 1) == (index_j + 1))  // правый низ            
+                        || ((x - 1) == index_i && (y - 1) == index_j)              // исключение перемещения пустой (с нулем) ячейки
+                        || (x > size || x < 1 || y > size || y < 1))               // исключение ввода несуществующего элемента
+                    {
+                        x = rand() % 4 + 1;
+                        y = rand() % 4 + 1;
+                    }
+
+
+
+                    swap(array[index_i][index_j], array[x - 1][y - 1]);
+
+                    counter_win = 1;                                              // проверка на победу
+                    for (int i = 0; i < size; i++)
+                    {
+                        for (int j = 0; j < size; j++)
+                        {
+                            if (array[i][j] == counter_win)
+                                counter_win++;
+                            else
+                                break;
+                        }
+                    }
+
+                    counter_step++;
+
+                    if (counter_win == 16 && array[3][3] == 0)
+                    {
+
+                        marker = true;
+                    }
+                }
+
+                system("cls");
+                cout << "\n\n\tПобеда!!!\n\n\a";
+                show(array, size);
+                time(&end);
+                seconds = difftime(end, start);
+                cout << "\n\n\tПоздравляем, компьютер собрал пятнашки, у него ушло " << counter_step << " ходов и " << seconds << " секунд.";
+                break;
+            }
+        }
+    }
+
+
+    cout << endl << endl << endl;
+    return 0;
+}
